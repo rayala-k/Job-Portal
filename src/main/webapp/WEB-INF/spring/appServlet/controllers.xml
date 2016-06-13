@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+		http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-3.0.xsd	
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd">
+
+	<!-- Scans within the base package of the application for @Components to 
+		configure as beans -->
+
+
+
+	<bean class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
+		<property name="triggers">
+			<list>
+				<ref bean="sendJobAlertsCronTrigger" />
+			</list>
+		</property>
+	</bean>
+	<bean id="sendJobAlertsCronTrigger" class="org.springframework.scheduling.quartz.CronTriggerBean">
+		<property name="jobDetail" ref="sendEmailAlertJob" />
+		<!-- run every morning at 6 AM -->
+		<property name="cronExpression" value="0 57 4 * * ?" />
+	</bean>
+
+	<bean name="sendEmailAlertJob" class="org.springframework.scheduling.quartz.JobDetailBean">
+		<property name="jobClass" value="com.neu.jobportal.controller.SendJobAlertMailJob" />
+		<property name="jobDataAsMap">
+			<map>
+				<entry key="emailService" value-ref="emailService"></entry>
+				<entry key="personService" value-ref="personService"></entry>
+			</map>
+		</property>
+	</bean>
+	
+	<bean id="personService" class="com.neu.jobportal.service.PersonServiceImpl">
+		
+	</bean>
+
+	<bean id="emailService" class="com.neu.jobportal.service.EmailServiceImpl">
+		<property name="mailSender" ref="mailSender"></property>
+	</bean>
+
+	<bean id="mailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl">
+		<property name="defaultEncoding" value="UTF-8" />
+		<property name="host" value="smtp.gmail.com" />
+		<property name="port" value="465" />
+		<property name="protocol" value="smtps" />
+		<property name="username" value="username@gmail.com" />
+		<property name="password" value="pwd" />
+		<property name="javaMailProperties">
+			<props>
+				<prop key="mail.smtps.auth">true</prop>
+				<prop key="mail.smtps.starttls.enable">true</prop>
+				<prop key="mail.smtps.debug">true</prop>
+			</props>
+		</property>
+	</bean>
+
+	<bean id="multipartResolver"
+		class="org.springframework.web.multipart.commons.CommonsMultipartResolver" />
+
+</beans>
